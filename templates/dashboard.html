@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DashBoard</title>
+</head>
+
+<body>
+
+    <h2>Upload File</h2>
+    <form action="{{ url_for('dashboard') }}" method="POST" enctype="multipart/form-data">
+        <label for="file">Choose a CSV file to upload:</label>
+        <input type="file" id="file" name="file"><br><br>
+        <input type="submit" value="Upload">
+    </form>
+    <br>
+    <br>
+
+    <!-- <form action="{{ url_for('logout') }}" method="post"> -->
+    <button type="submit" onclick="callLogout()">Log Out</button>
+
+    <script>
+        function callLogout() {
+            fetch("{{ url_for('logout') }}", {
+                method: 'POST',
+                body: true,
+                headers: {
+                    "Content-type": "application/json; charset=UTF-8",
+                    'Access-Control-Allow-Origin': '*'
+                }
+            })
+                .then((resp) => resp.json())
+                .then((json) => {
+                    window.location.href = 'http://127.0.0.1:5000' + json['resp']
+                })
+
+        }
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Crime Rate Prediction Results</title>
+    <style>
+        .progress {
+            height: 25px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            background-color: orange;
+            border-radius: 5px;
+        }
+
+        .progress-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: white;
+            text-align: center;
+            background-color: red;
+            transition: width 0.6s ease;
+        }
+    </style>
+    <script src="{{ url_for('static', filename='handle_send_location.js') }}" defer></script>
+    <script src='https://www.bing.com/api/maps/mapcontrol?callback=loadMapScenario' async defer></script>
+    <script>
+        function change_page_to_login() {
+            window.location.href = 'http://127.0.0.1:5000/login'
+        }
+    </script>
+</head>
+
+<body>
+    <h1>Crime Rate Prediction</h1>
+    <form method="POST" action="/check_crime_rate">
+        <button type="button" onclick="getLocation()">Check Now</button>
+    </form>
+
+    <button onclick="change_page_to_login()">Log In</button>
+
+    <h1>Crime Rate Prediction Results</h1>
+    <div class="progress">
+        <div id="crime_rate_bar" class="progress-bar" role="progressbar"
+            style="width: {{ crime_rate*10 }}%; {% if crime_rate < 5 %}background-color: yellowgreen;{% elif crime_rate < 6 %}background-color: blue;{% else %}background-color: red;{% endif %}"
+            aria-valuenow="{{ crime_rate*10 }}" aria-valuemin="0" aria-valuemax="100">
+            <span style="font-weight: bold; color: white;">{{ crime_rate }}</span>
+        </div>
+    </div>
+
+
+
+    <h2>Crime Rate by Location Scatter Plot</h2>
+    <img src="{{ base64_scatter_plot }}" alt="Scatter plot of crime rate by location">
+    <h2>Crime Rate by Location Bar Chart</h2>
+    <img src="{{ base64_bar_plot }}" alt="Bar chart of crime rate by location">
+
+    <script>
+        function loadMapScenario() {
+            var map = new Microsoft.Maps.Map('#myMap', {
+                credentials: '{{ bing_maps_api_key }}',
+                center: new Microsoft.Maps.Location({{ latitude }}, {{ longitude }}),
+        zoom: 14
+    });
+
+        Microsoft.Maps.Events.addHandler(map, 'click', function (resp) {
+
+            fetch("http://127.0.0.1:5000/", {
+                method: "POST",
+                body: JSON.stringify({
+                    latitude: resp.location.latitude,
+                    longitude: resp.location.longitude
+                }),
+                headers: {
+                    "Content-type": "application/json; charset=UTF-8",
+                    'Access-Control-Allow-Origin': '*'
+                }
+            })
+                .then((response) => response.json())
+                .then((json) => {
+                    document.open()
+                    document.write(json['result'])
+                    document.close()
+                })
+        });
+    }
+
+
+        var url = "https://dev.virtualearth.net/REST/v1/Locations/" + {{ latitude }} + "," + {{ longitude }} + "?o=json&key={{ bing_maps_api_key }}";
+        fetch(url)
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (data) {
+                var address = data.resourceSets[0].resources[0].address.formattedAddress;
+                document.getElementById('info').innerHTML = "<h3>Location Address:</h3><p>" + address + "</p>";
+                document.getElementById('latitude').innerHTML = "<h3>Latitude:</h3><p>" + {{ latitude }} + "</p>";
+                document.getElementById('longitude').innerHTML = "<h3>Longitude:</h3><p>" + {{ longitude }} + "</p>";
+            });
+    </script>
+    <div id='myMap' style='position:relative;width:600px;height:450px;'></div>
+    
+    <div id="latitude"></div>
+    <div id="longitude"></div>
+    <div id="info"></div>
+    <div style="padding-top: 100px;"></div>
+</body>
+
+</html>
